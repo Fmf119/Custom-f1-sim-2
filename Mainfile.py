@@ -16,7 +16,8 @@ def init_data():
             'hall_of_fame': [],
             'former_teams': [],
             'team_champions': [],
-            'wdc_history': []
+            'wdc_history': [],
+            'retired_drivers': []  # New list to store retired drivers
         }
 
 init_data()
@@ -52,7 +53,7 @@ def load_from_device(file):
 # Drivers Page
 def drivers_page():
     st.header("Drivers")
-    option = st.radio("Select an option:", ["View Drivers", "Add Driver", "Edit Driver", "Retire Driver", "Transfer Driver", "Add to Hall of Fame"])
+    option = st.radio("Select an option:", ["View Drivers", "Add Driver", "Edit Driver", "Retire Driver", "Transfer Driver", "Add to Hall of Fame", "Restore Driver"])
 
     if option == "View Drivers":
         if st.session_state['data']['drivers']:
@@ -92,43 +93,30 @@ def drivers_page():
             st.session_state['data']['drivers'].append(driver)
             st.success(f"Driver {driver_name} added to team {team_name}!")
 
-    elif option == "Edit Driver":
-        driver_names = [driver['name'] for driver in st.session_state['data']['drivers']]
-        selected_driver_name = st.selectbox("Select Driver to Edit", driver_names)
-        selected_driver = next(driver for driver in st.session_state['data']['drivers'] if driver['name'] == selected_driver_name)
-
-        new_nationality = st.text_input("Edit Nationality", value=selected_driver['nationality'])
-        new_age = st.number_input("Edit Age", value=selected_driver['age'], min_value=18, max_value=100)
-        new_team = st.selectbox("Choose New Team", [team['name'] for team in st.session_state['data']['teams']])
-
-        if st.button("Save Changes"):
-            selected_driver['nationality'] = new_nationality
-            selected_driver['age'] = new_age
-            selected_driver['team'] = new_team
-            st.success(f"Driver {selected_driver_name} updated successfully!")
-
     elif option == "Retire Driver":
-        driver_names = [driver['name'] for driver in st.session_state['data']['drivers']]
-        selected_driver_name = st.selectbox("Select Driver to Retire", driver_names)
-        selected_driver = next(driver for driver in st.session_state['data']['drivers'] if driver['name'] == selected_driver_name)
-
-        retirement_reason = st.text_input("Retirement Reason")
+        driver_name = st.selectbox("Select a driver to retire", [driver['name'] for driver in st.session_state['data']['drivers'] if not driver['retired']])
 
         if st.button("Retire Driver"):
-            selected_driver['retired'] = True
-            selected_driver['retirement_reason'] = retirement_reason
-            st.success(f"Driver {selected_driver_name} retired successfully!")
+            for driver in st.session_state['data']['drivers']:
+                if driver['name'] == driver_name:
+                    driver['retired'] = True  # Mark the driver as retired
+                    driver['retirement_reason'] = "Retired"  # Optional, you can add a reason for retirement
+                    st.session_state['data']['retired_drivers'].append(driver)  # Add the retired driver to the retired list
+                    st.session_state['data']['drivers'] = [d for d in st.session_state['data']['drivers'] if d['name'] != driver_name]  # Remove from active drivers
+                    st.success(f"Driver {driver_name} has been retired!")
+                    break  # Exit the loop once the driver is found and retired
 
-    elif option == "Transfer Driver":
-        driver_names = [driver['name'] for driver in st.session_state['data']['drivers']]
-        selected_driver_name = st.selectbox("Select Driver to Transfer", driver_names)
-        selected_driver = next(driver for driver in st.session_state['data']['drivers'] if driver['name'] == selected_driver_name)
+    elif option == "Restore Driver":
+        driver_name = st.selectbox("Select a driver to restore", [driver['name'] for driver in st.session_state['data']['retired_drivers']])
 
-        new_team = st.selectbox("Select New Team", [team['name'] for team in st.session_state['data']['teams']])
-
-        if st.button("Transfer Driver"):
-            selected_driver['team'] = new_team
-            st.success(f"Driver {selected_driver_name} transferred to {new_team}!")
+        if st.button("Restore Driver"):
+            for driver in st.session_state['data']['retired_drivers']:
+                if driver['name'] == driver_name:
+                    driver['retired'] = False  # Set the driver's retired status back to False
+                    st.session_state['data']['drivers'].append(driver)  # Restore the driver back to active drivers
+                    st.session_state['data']['retired_drivers'] = [d for d in st.session_state['data']['retired_drivers'] if d['name'] != driver_name]  # Remove from retired list
+                    st.success(f"Driver {driver_name} has been restored!")
+                    break  # Exit the loop once the driver is found and restored
 
     elif option == "Add to Hall of Fame":
         driver_name = st.selectbox("Select driver to add to Hall of Fame", [driver['name'] for driver in st.session_state['data']['drivers']])
@@ -193,7 +181,7 @@ def teams_page():
 def simulate_page():
     st.header("Simulate")
     if st.button("Simulate Season"):
-        active_drivers = [d for d in st.session_state['data']['drivers'] if not d['retired']]
+        active_drivers = [d for d in st.session_state['data']['drivers'] if not d['retired']]  # Only consider active drivers
         if not active_drivers:
             st.error("No active drivers to simulate!")
             return
