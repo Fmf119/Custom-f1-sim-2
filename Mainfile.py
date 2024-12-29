@@ -102,7 +102,7 @@ def drivers_page():
 # Teams Page
 def teams_page():
     st.header("Teams")
-    option = st.radio("Select an option:", ["View Teams", "Add Team", "Retire Team"])
+    option = st.radio("Select an option:", ["View Teams", "Add Team", "Retire Team", "Restore Team"])
 
     if option == "View Teams":
         if st.session_state['data']['teams']:
@@ -120,6 +120,25 @@ def teams_page():
         if st.button("Add Team"):
             st.session_state['data']['teams'].append({'name': team_name, 'nationality': nationality, 'drivers': [], 'bankrupt': False, 'championships': 0})
             st.success(f"Team {team_name} added!")
+
+    elif option == "Retire Team":
+        team_name = st.selectbox("Select team to retire", [team['name'] for team in st.session_state['data']['teams'] if not team['bankrupt']])
+        if st.button("Retire Team"):
+            for team in st.session_state['data']['teams']:
+                if team['name'] == team_name:
+                    team['bankrupt'] = True
+                    st.session_state['data']['former_teams'].append(team)
+                    st.session_state['data']['teams'] = [t for t in st.session_state['data']['teams'] if t['name'] != team_name]
+                    st.success(f"Team {team_name} retired!")
+
+    elif option == "Restore Team":
+        team_name = st.selectbox("Select bankrupt team to restore", [team['name'] for team in st.session_state['data']['former_teams']])
+        if st.button("Restore Team"):
+            for team in st.session_state['data']['former_teams']:
+                if team['name'] == team_name:
+                    st.session_state['data']['teams'].append(team)
+                    st.session_state['data']['former_teams'] = [t for t in st.session_state['data']['former_teams'] if t['name'] != team_name]
+                    st.success(f"Team {team_name} restored!")
 
 # Simulate Page
 def simulate_page():
