@@ -92,6 +92,44 @@ def drivers_page():
             st.session_state['data']['drivers'].append(driver)
             st.success(f"Driver {driver_name} added to team {team_name}!")
 
+    elif option == "Edit Driver":
+        driver_names = [driver['name'] for driver in st.session_state['data']['drivers']]
+        selected_driver_name = st.selectbox("Select Driver to Edit", driver_names)
+        selected_driver = next(driver for driver in st.session_state['data']['drivers'] if driver['name'] == selected_driver_name)
+
+        new_nationality = st.text_input("Edit Nationality", value=selected_driver['nationality'])
+        new_age = st.number_input("Edit Age", value=selected_driver['age'], min_value=18, max_value=100)
+        new_team = st.selectbox("Choose New Team", [team['name'] for team in st.session_state['data']['teams']])
+
+        if st.button("Save Changes"):
+            selected_driver['nationality'] = new_nationality
+            selected_driver['age'] = new_age
+            selected_driver['team'] = new_team
+            st.success(f"Driver {selected_driver_name} updated successfully!")
+
+    elif option == "Retire Driver":
+        driver_names = [driver['name'] for driver in st.session_state['data']['drivers']]
+        selected_driver_name = st.selectbox("Select Driver to Retire", driver_names)
+        selected_driver = next(driver for driver in st.session_state['data']['drivers'] if driver['name'] == selected_driver_name)
+
+        retirement_reason = st.text_input("Retirement Reason")
+
+        if st.button("Retire Driver"):
+            selected_driver['retired'] = True
+            selected_driver['retirement_reason'] = retirement_reason
+            st.success(f"Driver {selected_driver_name} retired successfully!")
+
+    elif option == "Transfer Driver":
+        driver_names = [driver['name'] for driver in st.session_state['data']['drivers']]
+        selected_driver_name = st.selectbox("Select Driver to Transfer", driver_names)
+        selected_driver = next(driver for driver in st.session_state['data']['drivers'] if driver['name'] == selected_driver_name)
+
+        new_team = st.selectbox("Select New Team", [team['name'] for team in st.session_state['data']['teams']])
+
+        if st.button("Transfer Driver"):
+            selected_driver['team'] = new_team
+            st.success(f"Driver {selected_driver_name} transferred to {new_team}!")
+
     elif option == "Add to Hall of Fame":
         driver_name = st.selectbox("Select driver to add to Hall of Fame", [driver['name'] for driver in st.session_state['data']['drivers']])
         if st.button("Add to Hall of Fame"):
