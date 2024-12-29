@@ -2,6 +2,7 @@ import streamlit as st
 import pickle
 import os
 import random
+import uuid  # Import uuid to generate unique IDs for teams
 
 # File path for saving all data
 SAVE_FILE = "f1_simulation_data.pkl"
@@ -118,18 +119,28 @@ def teams_page():
         team_name = st.text_input("Enter team name:")
         nationality = st.text_input("Enter team nationality:")
         if st.button("Add Team"):
-            st.session_state['data']['teams'].append({'name': team_name, 'nationality': nationality, 'drivers': [], 'bankrupt': False, 'championships': 0})
-            st.success(f"Team {team_name} added!")
+            if team_name:
+                team_id = str(uuid.uuid4())  # Generate a unique ID for the team
+                st.session_state['data']['teams'].append({
+                    'id': team_id,  # Assign the unique ID
+                    'name': team_name,
+                    'nationality': nationality,
+                    'drivers': [],
+                    'bankrupt': False,
+                    'championships': 0
+                })
+                st.success(f"Team {team_name} added!")
 
     elif option == "Retire Team":
-        team_name = st.selectbox("Select team to retire", [team['name'] for team in st.session_state['data']['teams'] if not team['bankrupt']])
+        team_name = st.selectbox("Select team to retire", [team['name'] for team in st.session_state['data']['teams']])
         if st.button("Retire Team"):
             for team in st.session_state['data']['teams']:
                 if team['name'] == team_name:
-                    team['bankrupt'] = True
-                    st.session_state['data']['former_teams'].append(team)
-                    st.session_state['data']['teams'] = [t for t in st.session_state['data']['teams'] if t['name'] != team_name]
-                    st.success(f"Team {team_name} retired!")
+                    team['bankrupt'] = True  # Mark the specific team as bankrupt
+                    st.session_state['data']['former_teams'].append(team)  # Add to former teams
+                    st.session_state['data']['teams'] = [t for t in st.session_state['data']['teams'] if t['name'] != team_name]  # Remove retired team
+                    st.success(f"Team {team_name} has been retired!")
+                    break  # Exit the loop once the team is found and retired
 
     elif option == "Restore Team":
         team_name = st.selectbox("Select bankrupt team to restore", [team['name'] for team in st.session_state['data']['former_teams']])
@@ -138,7 +149,7 @@ def teams_page():
                 if team['name'] == team_name:
                     st.session_state['data']['teams'].append(team)
                     st.session_state['data']['former_teams'] = [t for t in st.session_state['data']['former_teams'] if t['name'] != team_name]
-                    st.success(f"Team {team_name} restored!")
+                    st.success(f"Team {team_name} has been restored!")
 
 # Simulate Page
 def simulate_page():
