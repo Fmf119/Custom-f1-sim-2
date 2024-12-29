@@ -93,6 +93,54 @@ def drivers_page():
             st.session_state['data']['drivers'].append(driver)
             st.success(f"Driver {driver_name} added to team {team_name}!")
 
+    elif option == "Edit Driver":
+        driver_name = st.selectbox("Select a driver to edit", [driver['name'] for driver in st.session_state['data']['drivers']])
+
+        if driver_name:
+            driver = next(driver for driver in st.session_state['data']['drivers'] if driver['name'] == driver_name)
+
+            # Edit fields for selected driver
+            driver_name = st.text_input("Edit driver name", value=driver['name'])
+            nationality = st.text_input("Edit nationality", value=driver['nationality'])
+            age = st.number_input("Edit age", min_value=18, max_value=100, value=driver['age'])
+            racecraft = st.slider("Edit Racecraft", 1, 100, value=driver['stats']['racecraft'])
+            overtaking = st.slider("Edit Overtaking", 1, 100, value=driver['stats']['overtaking'])
+            iq = st.slider("Edit IQ", 1, 100, value=driver['stats']['iq'])
+            focus = st.slider("Edit Focus", 1, 100, value=driver['stats']['focus'])
+            potential = st.slider("Edit Potential", 1, 100, value=driver['stats']['potential'])
+
+            if st.button("Save Edits"):
+                # Update the driver's attributes
+                driver['name'] = driver_name
+                driver['nationality'] = nationality
+                driver['age'] = age
+                driver['stats'] = {'racecraft': racecraft, 'overtaking': overtaking, 'iq': iq, 'focus': focus, 'potential': potential}
+                driver['stats']['overall'] = (racecraft + overtaking + iq + focus + potential) / 5  # Recalculate overall stat
+
+                st.success(f"Driver {driver_name} has been updated!")
+
+    elif option == "Transfer Driver":
+        driver_name = st.selectbox("Select a driver to transfer", [driver['name'] for driver in st.session_state['data']['drivers']])
+
+        if driver_name:
+            driver = next(driver for driver in st.session_state['data']['drivers'] if driver['name'] == driver_name)
+
+            # Choose a new team to transfer to
+            new_team = st.selectbox("Select a new team", [team['name'] for team in st.session_state['data']['teams'] if not team['bankrupt']])
+
+            if st.button("Transfer Driver"):
+                # Remove driver from old team
+                old_team = next(team for team in st.session_state['data']['teams'] if team['name'] == driver['team'])
+                old_team['drivers'] = [d for d in old_team['drivers'] if d['name'] != driver_name]
+
+                # Add driver to new team
+                driver['team'] = new_team
+                for team in st.session_state['data']['teams']:
+                    if team['name'] == new_team:
+                        team['drivers'].append(driver)
+
+                st.success(f"Driver {driver_name} has been transferred to {new_team}!")
+
     elif option == "Retire Driver":
         driver_name = st.selectbox("Select a driver to retire", [driver['name'] for driver in st.session_state['data']['drivers'] if not driver['retired']])
 
@@ -126,7 +174,7 @@ def drivers_page():
                     st.session_state['data']['hall_of_fame'].append(driver)
                     st.success(f"Driver {driver_name} added to Hall of Fame!")
 
-# Teams Page
+# Teams Page and other pages (not changed)
 def teams_page():
     st.header("Teams")
     option = st.radio("Select an option:", ["View Teams", "Add Team", "Retire Team", "Restore Team"])
